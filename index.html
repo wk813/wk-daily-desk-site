@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>WK Daily Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: header strip, KPI pills, sales table (daily/monthly), then the market radar in two columns */
+:root{
+  --bg:#f3f4f6; --panel:#ffffff; --ink:#18202b; --muted:#5d6876; --line:#dde1e7;
+  --accent:#b8740a; --accent-soft:#fbefd9;
+  --ok:#1f8a5b; --ok-soft:#dff3e9; --warn:#b4570a; --warn-soft:#fde9d6; --crit:#c2363b; --crit-soft:#fbe3e3;
+  --sample:#6b4fbb; --sample-soft:#ece6fb;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Figtree",ui-sans-serif,system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#11161d; --panel:#19202a; --ink:#e6eaf0; --muted:#97a2b1; --line:#2a3340;
+  --accent:#f0a93a; --accent-soft:#3a2c14; --ok:#4cc38a; --ok-soft:#173326; --warn:#f19a4a; --warn-soft:#3b2414;
+  --crit:#f07076; --crit-soft:#3d1c1f; --sample:#b39cff; --sample-soft:#2a2340; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);padding:24px 16px 40px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font:700 clamp(26px,4vw,34px)/1.1 var(--f-display);margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);margin-top:4px}
+.clock{font:500 28px/1 var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+.clock small{display:block;font:400 12px/1.4 var(--f-body);color:var(--muted);margin-top:4px}
+.summary{display:flex;flex-wrap:wrap;gap:10px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-weight:500}
+.pill b{font:500 17px/1 var(--f-mono);font-variant-numeric:tabular-nums}
+.pill.up{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.pill.down{background:var(--crit-soft);border-color:transparent;color:var(--crit)}
+.pill.hot{background:var(--accent-soft);border-color:transparent}
+section.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 8px;min-width:0}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+h2{font:600 19px/1.2 var(--f-display);margin:0;text-wrap:balance}
+h3{font:600 15px/1.3 var(--f-display);margin:4px 0 2px}
+.fresh{font:400 12px var(--f-mono);color:var(--muted)}
+.fresh.err{color:var(--crit)}
+.tag{font:600 11px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;border-radius:6px}
+.tag.sample{background:var(--sample-soft);color:var(--sample)}
+.tag.live{color:var(--ok);border:1px solid currentColor}
+.banner{background:var(--sample-soft);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:10px}
+button,select,input{font:500 13px var(--f-body);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+button{cursor:pointer;font-weight:600}
+button:hover{border-color:var(--accent)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+a{color:inherit}
+.ctrls{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.toggle{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.movers{display:flex;flex-wrap:wrap;gap:8px}
+.mv{font:600 13px var(--f-body);padding:6px 10px;border-radius:999px}
+.mv.up{background:var(--ok-soft);color:var(--ok)} .mv.down{background:var(--crit-soft);color:var(--crit)} .mv.flat{background:var(--bg);color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table.sales{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+.sales th{font:600 11px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px;border-bottom:1px solid var(--line)}
+.sales td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.sales tr:last-child td{border-bottom:0}
+.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sales th.num{text-align:right}
+td.rank{color:var(--muted);font-size:12px}
+.rk{display:block;font-size:11px}.rk.up{color:var(--ok)}.rk.down{color:var(--crit)}
+.pname{font-weight:500;overflow-wrap:anywhere}
+.ptype{display:block;font-size:12px;color:var(--muted);font-weight:400}
+.chg{display:inline-block;min-width:74px;text-align:right;font:600 13px var(--f-mono);padding:3px 7px;border-radius:5px}
+.chg.up{background:var(--ok-soft);color:var(--ok)} .chg.down{background:var(--crit-soft);color:var(--crit)} .chg.flat{color:var(--muted)} .chg.new{background:var(--accent-soft);color:var(--accent)}
+.pace{display:block;font:400 11px var(--f-body)} .pace.up{color:var(--ok)} .pace.down{color:var(--crit)}
+.bar-col{width:15%}
+.bar{position:relative;height:8px;background:var(--bg);border-radius:4px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--accent)}
+.bar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--muted)}
+.empty{color:var(--muted);padding:14px 0;font-size:14px}
+ul{list-style:none;margin:0;padding:0}
+.radar-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:24px}
+@media (max-width:820px){.radar-grid{grid-template-columns:minmax(0,1fr)}}
+.radar-sub{margin:0 0 8px;color:var(--muted);font-size:13px}
+.rd{display:grid;grid-template-columns:70px minmax(0,1fr);gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.rd:first-child{border-top:0}
+.when{font:500 12px/1.35 var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.when b{display:block;font-size:14px;color:var(--ink);font-weight:500}
+.cd{display:inline-block;margin-top:4px;padding:2px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+.cd.past{background:var(--bg);color:var(--muted)}
+.ttl{font-weight:600;overflow-wrap:anywhere}
+.sum{font-size:14px;margin-top:2px}
+.act{font-size:13px;margin-top:6px}
+.act::before{content:"Action: ";font-weight:600;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pc{font:500 12px/1 var(--f-body);padding:5px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--line);display:inline-flex;gap:6px;align-items:center}
+.pc i{font-style:normal;font-family:var(--f-mono);font-size:11px}.pc i.up{color:var(--ok)}.pc i.down{color:var(--crit)}
+.src{font-size:12px;color:var(--muted);margin-top:6px}
+.imp{font:600 10px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;padding:3px 6px;border-radius:4px;margin-left:6px;vertical-align:2px}
+.imp.high{background:var(--crit-soft);color:var(--crit)} .imp.medium{background:var(--warn-soft);color:var(--warn)} .imp.low{background:var(--bg);color:var(--muted)}
+#connect form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr) auto;gap:10px;align-items:end}
+@media (max-width:700px){#connect form{grid-template-columns:minmax(0,1fr)}}
+#connect label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600}
+#connect input{width:100%;font-family:var(--f-mono)}
+#connect p{margin:0 0 12px;font-size:14px;max-width:70ch}
+footer{color:var(--muted);font-size:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>WK Daily Desk</h1>
+      <div class="sub" id="dateline">OGM sales and market radar</div>
+    </div>
+    <div class="clock"><span id="clock-t">--:--</span><small>Singapore time</small></div>
+  </header>
+
+  <section class="panel" id="connect" hidden aria-labelledby="h-connect">
+    <div class="ph"><h2 id="h-connect">Connect to your data</h2></div>
+    <p>The numbers live in a private GitHub repo. Paste a <b>read-only</b> fine-grained token for that repo (Contents: Read). It stays in this browser only and is sent to nothing except api.github.com.</p>
+    <form id="connect-form">
+      <label for="in-repo">Repository (owner/name)<input id="in-repo" autocomplete="off" placeholder="owner/wk-daily-desk" required></label>
+      <label for="in-token">Read-only token<input id="in-token" type="password" autocomplete="off" placeholder="github_pat_…" required></label>
+      <button class="primary" type="submit">Connect</button>
+    </form>
+    <div class="fresh err" id="connect-err" style="padding-top:8px"></div>
+    <p style="margin-top:10px"><button type="button" id="demo-btn">Preview with sample data</button></p>
+  </section>
+
+  <div class="summary" aria-live="polite" id="kpis"></div>
+
+  <section class="panel" aria-labelledby="h-sales">
+    <div class="ph">
+      <h2 id="h-sales">Top 20 categories</h2>
+      <div class="ctrls">
+        <div class="seg" role="group" aria-label="Daily or monthly view">
+          <button type="button" id="mode-day" aria-pressed="true">Daily</button>
+          <button type="button" id="mode-month" aria-pressed="false">Monthly</button>
+        </div>
+        <span class="tag sample" id="sales-tag">Sample</span>
+      </div>
+    </div>
+    <div class="banner" id="sample-banner">Sample figures. Connect to your repo to see live OGM numbers.</div>
+    <div class="ph">
+      <div class="movers" id="sales-sum"></div>
+      <div class="ctrls">
+        <label class="toggle" for="sales-type">Type <select id="sales-type"><option value="">All</option></select></label>
+        <label class="toggle" for="sales-own"><input type="checkbox" id="sales-own"> Include OffGamers store credit &amp; gift cards</label>
+        <div class="seg" role="group" aria-label="Sort categories">
+          <button type="button" id="sort-rev" aria-pressed="true">By sales</button>
+          <button type="button" id="sort-chg" aria-pressed="false">Biggest moves</button>
+        </div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="sales">
+        <thead><tr><th class="num">#</th><th>Category</th><th class="num" id="th-cur">Today</th><th class="num" id="th-base">Yesterday</th><th class="num">Change</th><th class="num" id="th-extra">Month to date</th><th class="bar-col" aria-hidden="true"></th></tr></thead>
+        <tbody id="sales-body"></tbody>
+      </table>
+    </div>
+    <div class="fresh" id="sales-fresh" style="padding:8px 0"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-radar">
+    <div class="ph">
+      <h2 id="h-radar">Market radar</h2>
+      <span class="fresh" id="radar-fresh"></span>
+    </div>
+    <div class="radar-grid">
+      <div style="min-width:0">
+        <h3>Demand drivers for what we sell</h3>
+        <p class="radar-sub">Launches, sales and price changes likely to move our existing categories.</p>
+        <ul id="radar-drivers"></ul>
+      </div>
+      <div style="min-width:0">
+        <h3>New launches we don't carry</h3>
+        <p class="radar-sub">New gift card, retail or crypto products with no matching category in OGM.</p>
+        <ul id="radar-gaps"></ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span id="foot-status">Refreshes every 5 minutes while open.</span>
+    <button type="button" id="refresh-btn">Refresh now</button>
+    <button type="button" id="disconnect-btn" hidden>Disconnect this browser</button>
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const TZ = "Asia/Singapore", REFRESH_MS = 5*60*1000;
+const $ = id => document.getElementById(id);
+const el = (t,c,x) => { const e=document.createElement(t); if(c) e.className=c; if(x!=null) e.textContent=x; return e; };
+const link = (text, href) => { const a=el("a",null,text); a.href=href; a.target="_blank"; a.rel="noopener noreferrer"; return a; };
+const money = n => "$"+Math.round(n).toLocaleString("en-US");
+const fmtTime = d => d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",timeZone:TZ});
+const sgDayKey = d => d.toLocaleDateString("en-CA",{timeZone:TZ});
+const sgMidnight = off => new Date(sgDayKey(new Date(Date.now()+off*864e5))+"T00:00:00+08:00");
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const store = { get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:v; }catch(e){ return d; } }, set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }, del(k){ try{ localStorage.removeItem(k); }catch(e){} } };
+
+/* ---------- state ---------- */
+let SALES = null, RADAR = null, LIVE = false, lastFetch = null, fetchErr = null;
+let mode = store.get("wk.mode","day"), sortBy = store.get("wk.sort","rev"), typeF = store.get("wk.type",""), withOwn = store.get("wk.own","0")==="1";
+$("sales-own").checked = withOwn;
+
+/* ---------- repo + token ---------- */
+function guessRepo(){
+  const m = /^([^.]+)\.github\.io$/i.exec(location.hostname), seg = location.pathname.split("/").filter(Boolean)[0];
+  return m && seg ? m[1]+"/"+seg : "";
+}
+/* The page is served from a public repo; the numbers live in this private repo. */
+const DATA_REPO = "wk813/wk-daily-desk";
+const cfg = () => ({ repo: store.get("wk.repo", DATA_REPO || guessRepo()), token: store.get("wk.token","") });
+$("in-repo").value = cfg().repo;
+
+async function ghRaw(path){
+  const { repo, token } = cfg();
+  const r = await fetch("https://api.github.com/repos/"+repo+"/contents/"+path+"?ref=data", {
+    headers: { Authorization: "Bearer "+token, Accept: "application/vnd.github.raw+json", "X-GitHub-Api-Version": "2022-11-28" },
+    cache: "no-store"
+  });
+  if (r.status === 401) throw new Error("The token was rejected. It may have expired; connect again.");
+  if (r.status === 404) throw new Error("Couldn't find "+path+" on the data branch of "+repo+". Check the repo name, the token's repo access, and that the exporter has run.");
+  if (!r.ok) throw new Error("GitHub answered "+r.status+" for "+path+".");
+  return r.json();
+}
+
+async function load(){
+  const { repo, token } = cfg();
+  if (!repo || !token){ $("connect").hidden = false; $("disconnect-btn").hidden = true; if (!SALES) useSample(); render(); return; }
+  try {
+    const [s, rd] = await Promise.all([ghRaw("sales.json"), ghRaw("radar.json").catch(()=>null)]);
+    SALES = s; RADAR = rd || { items:[], meta:null }; LIVE = true; fetchErr = null; lastFetch = new Date();
+    $("connect").hidden = true; $("disconnect-btn").hidden = false;
+  } catch(e){
+    fetchErr = e.message;
+    if (!LIVE){ $("connect").hidden = false; $("connect-err").textContent = e.message; useSample(); }
+  }
+  render();
+}
+
+$("connect-form").addEventListener("submit", e => {
+  e.preventDefault();
+  store.set("wk.repo", $("in-repo").value.trim()); store.set("wk.token", $("in-token").value.trim());
+  $("in-token").value = ""; $("connect-err").textContent = ""; load();
+});
+$("demo-btn").addEventListener("click", ()=>{ useSample(); $("connect").hidden = true; render(); });
+$("disconnect-btn").addEventListener("click", ()=>{ store.del("wk.token"); LIVE=false; SALES=null; RADAR=null; load(); });
+$("refresh-btn").addEventListener("click", load);
+document.addEventListener("visibilitychange", ()=>{ if (!document.hidden && LIVE && Date.now()-(lastFetch||0) > 60000) load(); });
+setInterval(()=>{ if (!document.hidden) load(); }, REFRESH_MS);
+
+/* ---------- sample data (clearly labelled) ---------- */
+function useSample(){
+  LIVE = false;
+  const S = [["Steam Wallet","Gift Card",48620,44910],["PlayStation Network","Gift Card",39280,43160],["Razer Gold","Payment Card",35950,29870],["Google Play","Gift Card",28610,28240],["Apple iTunes","Gift Card",26880,30920],["Free Fire","Game",22340,16420],["Xbox Live Gift Card","Gift Card",19720,19910],["Nintendo eShop","Gift Card",17930,21650],["PUBG Mobile","Game",16410,12230],["Mobile Legends","Game",15990,17840],["Valorant","Game",14350,10120],["Roblox","Gift Card",12880,13020],["Genshin Impact","Game",11140,12900],["Netflix","Software & App",9720,8980],["Spotify","Software & App",8210,8390],["Amazon","Gift Card",7870,9610],["Honkai: Star Rail","Game",6430,7610],["EA Sports FC","Game",5980,0],["League of Legends","Game",5620,4410],["Call of Duty Points","Game",4170,3890]];
+  const now = new Date(), d = +sgDayKey(new Date(Date.now()-864e5)).slice(8), m = +sgDayKey(now).slice(5,7)-1;
+  SALES = { source:"sample", latestDay: d+"-"+MON[m], prevDay: Math.max(1,d-1)+"-"+MON[m], nDays:d, thisMon:MON[m], lastMon:MON[(m+11)%12], daysThisMonth:31, daysLastMonth:30, hasPrevMonth:true, year:now.getFullYear(),
+    categories: S.map(([t,ty,a,b],i)=>({ id:"s"+i, title:"Sample · "+t, type:ty, deal:"Official", day:a, prev:b, mtd:a*d*0.95, psame:b*d*0.97, lastFull:b*30 })) };
+  const iso = off => sgDayKey(new Date(Date.now()+off*864e5));
+  RADAR = { meta:{ updatedAt:new Date().toISOString(), note:"Sample" }, items:[
+    { id:"x1", kind:"driver", impact:"high", date:iso(40), title:"Sample · Big console game launch", summary:"Example of a launch that lifts console wallet top-ups.", products:[{label:"PlayStation Network",match:["playstation network"]},{label:"Xbox",match:["xbox"]}], action:"Check stock depth before launch week.", sourceTitle:"Sample source", sourceUrl:"https://example.com" },
+    { id:"x2", kind:"gap", impact:"medium", date:iso(-20), title:"Sample · New crypto exchange gift card", summary:"Example of a launch we don't carry yet.", products:[{label:"Similar: Binance Gift Card",match:["binance"]}], action:"Ask about distributor access.", sourceTitle:"Sample source", sourceUrl:"https://example.com" } ] };
+}
+
+/* ---------- sales ---------- */
+const isOwn = r => r.deal==="OGSC" || r.deal==="OGC" || /^offgamers (store credit|gift card)/i.test(r.title||"");
+function dayLabel(h){ const m=/^(\d{1,2})-([A-Za-z]{3})$/.exec(h||""); if(!m) return h||""; const d=new Date((SALES.year||new Date().getFullYear()), MON.indexOf(m[2]), +m[1]); return d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}); }
+
+function computeTop(){
+  const S = SALES, monthly = mode==="month";
+  const cur = r => monthly ? r.mtd : r.day, base = r => monthly ? r.psame : r.prev;
+  const all = (S.categories||[]).filter(r => (withOwn || !isOwn(r)) && (!typeF || r.type===typeF));
+  const top = all.filter(r=>cur(r)>0).sort((a,b)=>cur(b)-cur(a)).slice(0,20).map(r=>({...r}));
+  const prevRank = all.filter(r=>base(r)>0).sort((a,b)=>base(b)-base(a)).map(r=>r.id);
+  top.forEach((r,i)=>{ r.rank=i+1; const pi=prevRank.indexOf(r.id); r.prank=pi<0?null:pi+1; r.cur=cur(r); r.base=base(r); r.pct=r.base>0?(r.cur-r.base)/r.base*100:null;
+    r.pace = r.lastFull>0 && S.daysLastMonth ? ((r.mtd/S.nDays)/(r.lastFull/S.daysLastMonth)-1)*100 : null;
+    r.proj = S.nDays ? r.mtd/S.nDays*(S.daysThisMonth||30) : null; });
+  return top;
+}
+
+function renderSales(){
+  const S = SALES, monthly = mode==="month";
+  const curL = monthly ? S.thisMon+" 1–"+S.nDays : dayLabel(S.latestDay);
+  const baseL = monthly ? (S.lastMon ? S.lastMon+" 1–"+S.nDays : "Last month") : (S.prevDay ? dayLabel(S.prevDay) : "Day before");
+  $("mode-day").setAttribute("aria-pressed", !monthly); $("mode-month").setAttribute("aria-pressed", monthly);
+  $("sort-rev").setAttribute("aria-pressed", sortBy==="rev"); $("sort-chg").setAttribute("aria-pressed", sortBy==="chg");
+  $("h-sales").textContent = monthly ? "Top 20 categories · month to date vs same days last month" : "Top 20 categories · "+curL+" vs "+baseL;
+  $("th-cur").textContent = curL; $("th-base").textContent = baseL;
+  $("th-extra").textContent = monthly ? (S.lastMon ? S.lastMon+" full month" : "Last month") : "Month to date";
+
+  const types = [...new Set((S.categories||[]).filter(r=>r.mtd>0).map(r=>r.type).filter(Boolean))].sort();
+  const sel = $("sales-type"); sel.textContent=""; sel.appendChild(new Option("All",""));
+  types.forEach(t=>sel.appendChild(new Option(t,t))); if (!types.includes(typeF)) typeF=""; sel.value=typeF;
+
+  const top = computeTop();
+  const view = sortBy==="rev" ? top : [...top].sort((a,b)=>Math.abs(b.pct??1e9)-Math.abs(a.pct??1e9));
+  const max = Math.max(1,...top.map(r=>Math.max(r.cur,r.base)));
+  const tb = $("sales-body"); tb.textContent="";
+  if (!top.length){ const tr=el("tr"), td=el("td","empty","No sales for this filter."); td.colSpan=7; tr.appendChild(td); tb.appendChild(tr); }
+  view.forEach(r=>{
+    const tr=el("tr");
+    const rk=el("td","num rank",String(r.rank));
+    if (r.prank && r.prank!==r.rank){ const up=r.prank>r.rank; rk.appendChild(el("span","rk "+(up?"up":"down"),(up?"▲":"▼")+Math.abs(r.prank-r.rank))); }
+    else if (!r.prank) rk.appendChild(el("span","rk up","new"));
+    tr.appendChild(rk);
+    const nm=el("td","pname",r.title); if (r.type) nm.appendChild(el("span","ptype", r.type+(r.deal==="OGSC"?" · store credit":r.deal==="OGC"?" · OffGamers gift card":""))); tr.appendChild(nm);
+    tr.appendChild(el("td","num",money(r.cur)));
+    tr.appendChild(el("td","num",r.base?money(r.base):"–"));
+    const c=el("td","num"); let chip;
+    if (r.pct===null) chip=el("span","chg new", monthly?"New this month":"New");
+    else if (Math.abs(r.pct)<2) chip=el("span","chg flat",(r.pct>=0?"+":"")+r.pct.toFixed(1)+"%");
+    else chip=el("span","chg "+(r.pct>0?"up":"down"),(r.pct>0?"▲ +":"▼ ")+r.pct.toFixed(1)+"%");
+    chip.title=(r.cur-r.base>=0?"+":"−")+money(Math.abs(r.cur-r.base))+" vs "+baseL; c.appendChild(chip); tr.appendChild(c);
+    let x;
+    if (monthly){ x=el("td","num",r.lastFull?money(r.lastFull):"–"); if (r.proj) x.appendChild(el("span","pace "+(r.proj>=(r.lastFull||0)?"up":"down"),"On track for "+money(r.proj)+" in "+S.thisMon)); }
+    else { x=el("td","num",money(r.mtd)); if (r.pace!=null && S.lastMon) x.appendChild(el("span","pace "+(r.pace>=0?"up":"down"),(r.pace>=0?"+":"")+r.pace.toFixed(0)+"% pace vs "+S.lastMon)); }
+    tr.appendChild(x);
+    const bc=el("td","bar-col"), bar=el("div","bar"), f=el("i"); f.style.width=(r.cur/max*100)+"%"; bar.appendChild(f);
+    if (r.base){ const t=el("b"); t.style.left="calc("+(r.base/max*100)+"% - 1px)"; bar.appendChild(t); }
+    bar.setAttribute("aria-label",curL+" "+money(r.cur)+", "+baseL+" "+money(r.base)); bc.appendChild(bar); tr.appendChild(bc);
+    tb.appendChild(tr);
+  });
+  const up=top.filter(r=>r.pct===null||r.pct>=2).length, down=top.filter(r=>r.pct!==null&&r.pct<=-2).length, flat=top.length-up-down;
+  const tot=top.reduce((s,r)=>s+r.cur,0), ptot=top.reduce((s,r)=>s+r.base,0), tp=ptot?(tot-ptot)/ptot*100:0;
+  const sum=$("sales-sum"); sum.textContent="";
+  sum.appendChild(el("span","mv up",up+" improved")); sum.appendChild(el("span","mv down",down+" dropped")); if (flat) sum.appendChild(el("span","mv flat",flat+" flat"));
+  if (top.length) sum.appendChild(el("span","mv "+(tp>=0?"up":"down"),"Top 20 total "+money(tot)+" ("+(tp>=0?"+":"")+tp.toFixed(1)+"%)"));
+
+  $("sales-tag").className="tag "+(LIVE?"live":"sample"); $("sales-tag").textContent=LIVE?"Live":"Sample"; $("sample-banner").hidden=LIVE;
+  const fr=$("sales-fresh"); fr.classList.toggle("err",!!fetchErr);
+  fr.textContent = fetchErr ? fetchErr+" Showing the last data loaded." : LIVE
+    ? "From "+S.source+" · latest filled day "+dayLabel(S.latestDay)+(S.exportedAt?" · exported "+new Date(S.exportedAt).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",timeZone:TZ}):"")+(monthly&&!S.hasPrevMonth?" · last month's daily sheet wasn't readable":"")
+    : "Sample data · sales in USD";
+
+  // KPI pills
+  const k=$("kpis"); k.textContent="";
+  const pill=(label,val,cls)=>{ const p=el("span","pill"+(cls?" "+cls:""),label+" "); p.appendChild(el("b",null,val)); k.appendChild(p); };
+  pill(monthly?"Month to date":"Latest day", monthly ? curL : dayLabel(S.latestDay));
+  if (top.length) pill("Top 20 vs "+(monthly?"last month":"day before"), (tp>=0?"+":"")+tp.toFixed(1)+"%", tp>=0?"up":"down");
+  pill("Improved", String(up), "up"); pill("Dropped", String(down), down?"down":"");
+  const nextBig = (RADAR&&RADAR.items||[]).filter(i=>i.kind==="driver"&&i.impact==="high"&&i.date&&i.date>=sgDayKey(new Date())).sort((a,b)=>a.date<b.date?-1:1)[0];
+  if (nextBig){ const days=Math.round((new Date(nextBig.date+"T00:00:00+08:00")-sgMidnight(0))/864e5); pill(nextBig.title.split(/ (launches|releases)/)[0], days===0?"today":"in "+days+"d","hot"); }
+}
+
+/* ---------- radar ---------- */
+function salesFor(keys){
+  if (!LIVE || !SALES || !Array.isArray(keys) || !keys.length) return null;
+  const ks = keys.map(k=>String(k).toLowerCase()); let d=0,p=0,n=0;
+  (SALES.categories||[]).forEach(r=>{ const t=(r.title||"").toLowerCase(); if (ks.some(k=>t.includes(k))){ d+=r.day; p+=r.prev; n++; } });
+  return n ? { d, pct: p>0?(d-p)/p*100:null } : null;
+}
+function radarItem(it){
+  const li=el("li","rd"), w=el("div","when");
+  if (it.date){
+    const d=new Date(it.date+"T00:00:00+08:00");
+    w.appendChild(el("b",null,d.toLocaleDateString("en-GB",{day:"numeric",month:"short",timeZone:TZ})));
+    w.appendChild(document.createTextNode(d.toLocaleDateString("en-GB",{year:"numeric",timeZone:TZ})));
+    const days=Math.round((d-sgMidnight(0))/864e5); w.appendChild(el("br"));
+    w.appendChild(el("span","cd"+(days<0?" past":""), days===0?"Today":days>0?"in "+days+"d":Math.abs(days)+"d ago"));
+  } else w.appendChild(el("b",null,it.dateLabel||"Ongoing"));
+  li.appendChild(w);
+  const b=el("div"); b.style.minWidth="0";
+  const t=el("div","ttl",it.title||"Untitled"); if (it.impact) t.appendChild(el("span","imp "+it.impact,it.impact)); b.appendChild(t);
+  if (it.summary) b.appendChild(el("div","sum",it.summary));
+  if (Array.isArray(it.products) && it.products.length){
+    const ch=el("div","chips");
+    it.products.forEach(p=>{ const c=el("span","pc",p.label||p); const s=salesFor(p.match||[p.label||p]);
+      if (s){ const i=el("i",s.pct==null?"":s.pct>=0?"up":"down", money(s.d)+(s.pct==null?"":" "+(s.pct>=0?"▲":"▼")+Math.abs(s.pct).toFixed(0)+"%")); i.title="Combined sales of matching categories, latest day vs day before"; c.appendChild(i); }
+      ch.appendChild(c); });
+    b.appendChild(ch);
+  }
+  if (it.action) b.appendChild(el("div","act",it.action));
+  if (it.sourceUrl && /^https?:\/\//.test(it.sourceUrl)){ const s=el("div","src"); s.appendChild(document.createTextNode("Source: ")); s.appendChild(link(it.sourceTitle||"article",it.sourceUrl)); b.appendChild(s); }
+  li.appendChild(b); return li;
+}
+function renderRadar(){
+  const items=(RADAR&&RADAR.items)||[], today=sgDayKey(new Date()), cutoff=sgDayKey(new Date(Date.now()-14*864e5));
+  const impR={high:0,medium:1,low:2};
+  const drivers=items.filter(i=>i.kind==="driver"&&(!i.date||i.date>=cutoff)).sort((a,b)=>((a.date&&a.date<today)-(b.date&&b.date<today))||((a.date||"9999")<(b.date||"9999")?-1:1));
+  const gaps=items.filter(i=>i.kind==="gap").sort((a,b)=>(impR[a.impact]??3)-(impR[b.impact]??3));
+  const dr=$("radar-drivers"), gp=$("radar-gaps"); dr.textContent=""; gp.textContent="";
+  if (!drivers.length) dr.appendChild(el("li","empty","No upcoming demand drivers right now."));
+  if (!gaps.length) gp.appendChild(el("li","empty","No uncovered launches in the latest research run."));
+  drivers.forEach(i=>dr.appendChild(radarItem(i))); gaps.forEach(i=>gp.appendChild(radarItem(i)));
+  const m=RADAR&&RADAR.meta;
+  $("radar-fresh").textContent = !LIVE ? "Sample" : m&&m.updatedAt ? "Researched "+new Date(m.updatedAt).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",timeZone:TZ}) : "Waiting for the first research run";
+}
+
+/* ---------- shell ---------- */
+function render(){
+  if (!SALES) return;
+  renderSales(); renderRadar();
+  $("foot-status").textContent = LIVE && lastFetch ? "Loaded "+fmtTime(lastFetch)+" · refreshes every 5 minutes while open." : "Refreshes every 5 minutes while open.";
+}
+function tick(){ const n=new Date(); $("clock-t").textContent=fmtTime(n); $("dateline").textContent=n.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:TZ}); }
+tick(); setInterval(tick, 30000);
+
+$("mode-day").addEventListener("click",()=>{ mode="day"; store.set("wk.mode",mode); render(); });
+$("mode-month").addEventListener("click",()=>{ mode="month"; store.set("wk.mode",mode); render(); });
+$("sort-rev").addEventListener("click",()=>{ sortBy="rev"; store.set("wk.sort",sortBy); render(); });
+$("sort-chg").addEventListener("click",()=>{ sortBy="chg"; store.set("wk.sort",sortBy); render(); });
+$("sales-type").addEventListener("change",e=>{ typeF=e.target.value; store.set("wk.type",typeF); render(); });
+$("sales-own").addEventListener("change",e=>{ withOwn=e.target.checked; store.set("wk.own",withOwn?"1":"0"); render(); });
+
+if (/[?&]demo\b/.test(location.search)){ useSample(); render(); } else load();
+})();
+</script>
+</body>
+</html>
