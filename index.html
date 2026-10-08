@@ -136,7 +136,7 @@ footer{color:var(--muted);font-size:12px;display:flex;gap:12px;flex-wrap:wrap;al
 
   <section class="panel" aria-labelledby="h-sales">
     <div class="ph">
-      <h2 id="h-sales">Top 20 categories</h2>
+      <h2 id="h-sales">Top 50 categories</h2>
       <div class="ctrls">
         <div class="seg" role="group" aria-label="Daily or monthly view">
           <button type="button" id="mode-day" aria-pressed="true">Daily</button>
@@ -279,7 +279,7 @@ function computeTop(){
   const S = SALES, monthly = mode==="month";
   const cur = r => monthly ? r.mtd : r.day, base = r => monthly ? r.psame : r.prev;
   const all = (S.categories||[]).filter(r => (withOwn || !isOwn(r)) && (!typeF || r.type===typeF));
-  const top = all.filter(r=>cur(r)>0).sort((a,b)=>cur(b)-cur(a)).slice(0,20).map(r=>({...r}));
+  const top = all.filter(r=>cur(r)>0).sort((a,b)=>cur(b)-cur(a)).slice(0,50).map(r=>({...r}));
   const prevRank = all.filter(r=>base(r)>0).sort((a,b)=>base(b)-base(a)).map(r=>r.id);
   top.forEach((r,i)=>{ r.rank=i+1; const pi=prevRank.indexOf(r.id); r.prank=pi<0?null:pi+1; r.cur=cur(r); r.base=base(r); r.pct=r.base>0?(r.cur-r.base)/r.base*100:null;
     r.pace = r.lastFull>0 && S.daysLastMonth ? ((r.mtd/S.nDays)/(r.lastFull/S.daysLastMonth)-1)*100 : null;
@@ -293,7 +293,7 @@ function renderSales(){
   const baseL = monthly ? (S.lastMon ? S.lastMon+" 1–"+S.nDays : "Last month") : (S.prevDay ? dayLabel(S.prevDay) : "Day before");
   $("mode-day").setAttribute("aria-pressed", !monthly); $("mode-month").setAttribute("aria-pressed", monthly);
   $("sort-rev").setAttribute("aria-pressed", sortBy==="rev"); $("sort-chg").setAttribute("aria-pressed", sortBy==="chg");
-  $("h-sales").textContent = monthly ? "Top 20 categories · month to date vs same days last month" : "Top 20 categories · "+curL+" vs "+baseL;
+  $("h-sales").textContent = monthly ? "Top 50 categories · month to date vs same days last month" : "Top 50 categories · "+curL+" vs "+baseL;
   $("th-cur").textContent = curL; $("th-base").textContent = baseL;
   $("th-extra").textContent = monthly ? (S.lastMon ? S.lastMon+" full month" : "Last month") : "Month to date";
 
@@ -333,7 +333,7 @@ function renderSales(){
   const tot=top.reduce((s,r)=>s+r.cur,0), ptot=top.reduce((s,r)=>s+r.base,0), tp=ptot?(tot-ptot)/ptot*100:0;
   const sum=$("sales-sum"); sum.textContent="";
   sum.appendChild(el("span","mv up",up+" improved")); sum.appendChild(el("span","mv down",down+" dropped")); if (flat) sum.appendChild(el("span","mv flat",flat+" flat"));
-  if (top.length) sum.appendChild(el("span","mv "+(tp>=0?"up":"down"),"Top 20 total "+money(tot)+" ("+(tp>=0?"+":"")+tp.toFixed(1)+"%)"));
+  if (top.length) sum.appendChild(el("span","mv "+(tp>=0?"up":"down"),"Top 50 total "+money(tot)+" ("+(tp>=0?"+":"")+tp.toFixed(1)+"%)"));
 
   $("sales-tag").className="tag "+(LIVE?"live":"sample"); $("sales-tag").textContent=LIVE?"Live":"Sample"; $("sample-banner").hidden=LIVE;
   const fr=$("sales-fresh"); fr.classList.toggle("err",!!fetchErr);
@@ -345,7 +345,7 @@ function renderSales(){
   const k=$("kpis"); k.textContent="";
   const pill=(label,val,cls)=>{ const p=el("span","pill"+(cls?" "+cls:""),label+" "); p.appendChild(el("b",null,val)); k.appendChild(p); };
   pill(monthly?"Month to date":"Latest day", monthly ? curL : dayLabel(S.latestDay));
-  if (top.length) pill("Top 20 vs "+(monthly?"last month":"day before"), (tp>=0?"+":"")+tp.toFixed(1)+"%", tp>=0?"up":"down");
+  if (top.length) pill("Top 50 vs "+(monthly?"last month":"day before"), (tp>=0?"+":"")+tp.toFixed(1)+"%", tp>=0?"up":"down");
   pill("Improved", String(up), "up"); pill("Dropped", String(down), down?"down":"");
   const nextBig = (RADAR&&RADAR.items||[]).filter(i=>i.kind==="driver"&&i.impact==="high"&&i.date&&i.date>=sgDayKey(new Date())).sort((a,b)=>a.date<b.date?-1:1)[0];
   if (nextBig){ const days=Math.round((new Date(nextBig.date+"T00:00:00+08:00")-sgMidnight(0))/864e5); pill(nextBig.title.split(/ (launches|releases)/)[0], days===0?"today":"in "+days+"d","hot"); }
